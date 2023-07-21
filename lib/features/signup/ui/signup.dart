@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:todo_app/features/login/ui/login.dart';
 import 'package:todo_app/features/signup/bloc/bloc/signup_bloc.dart';
 
 class SignUp extends StatefulWidget {
-  SignUp({Key? key}) : super(key: key);
+  const SignUp({Key? key}) : super(key: key);
 
   @override
   State<SignUp> createState() => _SignUpState();
@@ -21,7 +20,7 @@ class _SignUpState extends State<SignUp> {
 
   final SignUpBloc _signUpBloc = SignUpBloc();
 
-@override
+  @override
   void initState() {
     _signUpBloc.add(SignUpInitialEvent());
     super.initState();
@@ -31,38 +30,39 @@ class _SignUpState extends State<SignUp> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: BlocBuilder<SignUpBloc, SignUpState>(
+      body: BlocConsumer<SignUpBloc, SignUpState>(
+        listener: (context, state) {
+          if (state is SignUpSuccessState) {
+            Navigator.pop(context);
+          }
+        },
+        buildWhen: (previous, current) => current is! SignUpSuccessState,
         bloc: _signUpBloc,
         builder: (context, state) {
-          if (state.runtimeType == SignUpLoadingState )  {
+          if (state.runtimeType == SignUpLoadingState) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
           if (state.runtimeType == SignUpInitial) {
             return Form(
-            key: _formKey,
-            child: Container(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  _header(),
-                  _userNameField(),
-                  _passwordField(),
-                  _signupBtn(context),
-                ],
+              key: _formKey,
+              child: Container(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    _header(),
+                    _userNameField(),
+                    _passwordField(),
+                    _signupBtn(context),
+                  ],
+                ),
               ),
-            ),
-          );
-          }  else if (state.runtimeType == SignUpSuccessState){
-              return Login();
-          } 
-          
-          else {
-            return Text("Error");
+            );
+          } else {
+            return const Text("Error");
           }
-          
         },
       ),
     );
@@ -87,7 +87,7 @@ class _SignUpState extends State<SignUp> {
         onPressed: () {
           if (_formKey.currentState!.validate()) {
             final String enteredUserName = userName.text;
-            final String enteredPassword = password.text; 
+            final String enteredPassword = password.text;
             _signUpBloc.add(
               SignUpBtnClickedEvent(enteredUserName, enteredPassword),
             );

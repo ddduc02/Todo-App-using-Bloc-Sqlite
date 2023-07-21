@@ -2,27 +2,26 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:todo_app/models/user.dart';
 
-class DataBaseHelper {
+class UserHelper {
   static const String DB_NAME = 'todo.db';
-  static const String TABLE_USER = 'user'; // Thay đổi tên bảng thành "user"
+  static const String TABLE_USER = 'user';
   static const int VERSION = 1;
   static Database? _db;
 
   Database? get db => _db;
 
-  DataBaseHelper._internal() {
+  UserHelper._private() {
     init();
   }
 
-  static final DataBaseHelper instance = DataBaseHelper._internal();
+  static final UserHelper instance = UserHelper._private();
 
   init() async {
     _db = await openDatabase(
       join(await getDatabasesPath(), DB_NAME),
       onCreate: (db, version) {
-        // Run the CREATE TABLE statement on the database.
         return db.execute(
-          'CREATE TABLE $TABLE_USER(id INTEGER PRIMARY KEY, username TEXT, password TEXT)',
+          'CREATE TABLE $TABLE_USER(id TEXT PRIMARY KEY, isLoggedIn bool, username TEXT, password TEXT)',
         );
       },
       version: VERSION,
@@ -30,22 +29,33 @@ class DataBaseHelper {
   }
 
   Future<void> insertUser(User user) async {
-    final db = DataBaseHelper.instance.db;
+    final db = UserHelper.instance.db;
     await db?.insert(TABLE_USER, user.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<bool> getUsers(String userName, String password) async {
-    final db = DataBaseHelper.instance.db;
+  Future<void> updateUser(User user) async {
+    final db = UserHelper.instance.db;
+
+    await db?.update(
+      TABLE_USER,
+      user.toMap(),
+      where: 'id = ?',
+      whereArgs: [user.id],
+    );
+  }
+
+  Future<User?> getUsers(String userName, String password) async {
+    final db = UserHelper.instance.db;
 
     var res = await db!.rawQuery("SELECT * FROM $TABLE_USER WHERE "
         "username = '$userName' AND "
         "password = '$password'");
     for (int i = 0; i < res.length; i++) {
       if (userName == res[i]['username'] && password == res[i]['password']) {
-        return true;
+        return User.fromMap(res.first);
       }
     }
-    return false;
+    return null;
   }
 }

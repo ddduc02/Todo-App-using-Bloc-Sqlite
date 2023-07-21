@@ -1,12 +1,16 @@
 part of 'login_bloc.dart';
 
-class LoginState {
+abstract class LoginState {
 }
+
+abstract class LoginMessage extends LoginState {}
 
 class LoginInitialState extends LoginState {}
 
 class LoginLoadingState extends LoginState {}
 
-class LoginSubmitSuccessState extends LoginState {}
+class LoginSubmitSuccessState extends LoginState {
+  final User user;
+  LoginSubmitSuccessState(this.user);}
 
-class LoginSubmitFailed extends LoginState {}
+class LoginSubmitFailed extends LoginMessage {}

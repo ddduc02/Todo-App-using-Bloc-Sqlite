@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:todo_app/features/home/home_page.dart';
+import 'package:todo_app/features/home/ui/home_page.dart';
 import 'package:todo_app/features/login/bloc/login_bloc.dart';
 import 'package:todo_app/features/login/bloc/login_event.dart';
 import 'package:todo_app/features/signup/ui/signup.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
-
   @override
   State<Login> createState() => _LoginState();
 }
@@ -29,8 +28,23 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: BlocBuilder<LoginBloc, LoginState>(
+      body: BlocConsumer<LoginBloc, LoginState>(
+        listener: (context, state) {
+          if (state is LoginSubmitFailed) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Couldn't find your account")));
+          }
+          if (state is LoginSubmitSuccessState) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+            );
+          }
+        },
         bloc: _loginBloc,
+        buildWhen: (previous, current) =>
+            current is! LoginSubmitFailed &&
+            current is! LoginSubmitSuccessState,
         builder: (context, state) {
           if (state is LoginInitialState) {
             return Form(
@@ -48,10 +62,8 @@ class _LoginState extends State<Login> {
                 ),
               ),
             );
-          } else if (state is LoginSubmitSuccessState) {
-            return const HomePage();
           } else {
-            return Text("Error");
+            return const Text("Error");
           }
         },
       ),
