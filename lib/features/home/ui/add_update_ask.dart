@@ -16,6 +16,7 @@ class AddOrUpdateTask extends StatefulWidget {
 }
 
 class _AddOrUpdateTaskState extends State<AddOrUpdateTask> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
@@ -52,50 +53,15 @@ class _AddOrUpdateTaskState extends State<AddOrUpdateTask> {
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextFormField(
-                    autofocus: true,
-                    controller: _titleController,
-                    decoration: InputDecoration(
-                      labelText: widget.task == null
-                          ? "Title"
-                          : widget.task!.title.toString(),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _descriptionController,
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                      labelText: widget.task == null
-                          ? "Descreption"
-                          : widget.task!.description.toString(),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => _selectDate(context),
-                    child: Text(
-                        'Select Date: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => _selectTime(context),
-                    child:
-                        Text('Select Time: ${_selectedTime.format(context)}'),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      _addOrUpdateTask();
-                    },
-                    child:
-                        Text(widget.task == null ? "Add task" : "Update task"),
-                  ),
+                  _titleField(),
+                  _desField(),
+                  _selectDateButton(),
+                  _selectTimeButton(),
+                  _addOrUpdateTaskButton()
                 ],
               ),
             ),
@@ -105,11 +71,84 @@ class _AddOrUpdateTaskState extends State<AddOrUpdateTask> {
     );
   }
 
+  Widget _titleField() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+      child: TextFormField(
+        autofocus: true,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter some text';
+          }
+          return null;
+        },
+        controller: _titleController,
+        decoration: InputDecoration(
+          labelText:
+              widget.task == null ? "Title" : widget.task!.title.toString(),
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  Widget _desField() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+      child: TextFormField(
+        controller: _descriptionController,
+        maxLines: 4,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter some text';
+          }
+          return null;
+        },
+        decoration: InputDecoration(
+          labelText: widget.task == null
+              ? "Descreption"
+              : widget.task!.description.toString(),
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  Widget _selectDateButton() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+      child: TextButton(
+        onPressed: () => _selectDate(context),
+        child: Text(
+            'Select Date: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'),
+      ),
+    );
+  }
+
+  Widget _selectTimeButton() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+      child: TextButton(
+        onPressed: () => _selectTime(context),
+        child: Text('Select Time: ${_selectedTime.format(context)}'),
+      ),
+    );
+  }
+
+  Widget _addOrUpdateTaskButton() {
+    return ElevatedButton(
+      onPressed: () {
+        _addOrUpdateTask();
+      },
+      child: Text(widget.task == null ? "Add task" : "Update task"),
+    );
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2021),
+      firstDate: DateTime(2023),
       lastDate: DateTime(2030),
     );
     setState(() {
@@ -141,13 +180,14 @@ class _AddOrUpdateTaskState extends State<AddOrUpdateTask> {
         dueDate: dueDate,
         isCompleted: 0,
         userId: widget.userId);
-    if (widget.task != null) {
-      NotificationService.instance.checkTaskDueDate(task);
-      BlocProvider.of<HomePageBloc>(context).add(UpdateTaskEvent(task));
-    } else {
-      NotificationService.instance.checkTaskDueDate(task);
-
-      BlocProvider.of<HomePageBloc>(context).add(AddTaskEvent(task));
+    if (_formKey.currentState!.validate()) {
+      if (widget.task != null) {
+        BlocProvider.of<HomePageBloc>(context).add(UpdateTaskEvent(task));
+        // NotificationService.instance.scheduleSendNotifi(task);
+      } else {
+        BlocProvider.of<HomePageBloc>(context).add(AddTaskEvent(task));
+        // NotificationService.instance.scheduleSendNotifi(task);
+      }
     }
   }
 }

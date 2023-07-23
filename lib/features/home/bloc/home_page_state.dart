@@ -30,8 +30,12 @@ class HomePageUpdateButtonClickedState extends HomePageNavigate {
 
 class AddedTaskSuccessState extends HomePageMessage {}
 
+class AddedTaskFailedState extends HomePageMessage {}
+
 class CompletedTaskSuccessState extends HomePageMessage {}
 
 class DeletedTaskSuccessState extends HomePageMessage {}
 
 class UpdatedTaskSuccessState extends HomePageMessage {}
+
+class UpdatedTaskFailedState extends HomePageMessage {}

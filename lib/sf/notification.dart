@@ -43,11 +43,9 @@ class NotificationService {
         id, title, body, await notificationDetails());
   }
 
-  Future<void> checkTaskDueDate(Task task) async {
-    DateTime now = DateTime.now();
+  Future<void> scheduleSendNotifi(Task task) async {
     //dueDate -  1 phút thì gửi notification;
-    DateTime notificationTime =
-        task.dueDate.subtract(const Duration(minutes: 1));
+    DateTime notificationTime = task.dueDate;
 
     // if (now.isAfter(notificationTime) && now.isBefore(task.dueDate)) {
     notificationsPlugin.zonedSchedule(

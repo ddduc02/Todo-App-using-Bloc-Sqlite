@@ -51,18 +51,6 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('This is a notification')),
-              );
-            },
-          ),
-        ],
-      ),
       body: BlocConsumer<HomePageBloc, HomePageState>(
         bloc: BlocProvider.of<HomePageBloc>(context),
         buildWhen: (previous, current) =>
@@ -84,6 +72,10 @@ class _HomePageState extends State<HomePage>
                 .add(HomePageLoadData(sliding));
             ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Added a new task")));
+          } else if (state is AddedTaskFailedState) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content:
+                    Text("Please select a time later than the current time ")));
           } else if (state is DeletedTaskSuccessState) {
             ScaffoldMessenger.of(context)
                 .showSnackBar(const SnackBar(content: Text("Deleted")));
@@ -95,55 +87,78 @@ class _HomePageState extends State<HomePage>
           } else if (state is UpdatedTaskSuccessState) {
             BlocProvider.of<HomePageBloc>(context)
                 .add(HomePageLoadData(sliding));
+          } else if (state is UpdatedTaskFailedState) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content:
+                    Text("Please select a time later than the current time ")));
           }
         },
         builder: (context, state) {
           if (state is HomePageLoadSuccess) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Header(),
-                SizedBox(
-                  height: 50,
-                  child: CupertinoSlidingSegmentedControl<int>(
-                    groupValue: sliding,
-                    onValueChanged: (value) {
-                      setState(() {
-                        sliding = value!;
-                        print("Sliding $sliding");
-                        BlocProvider.of<HomePageBloc>(context)
-                            .add(HomePageLoadData(sliding));
-                      });
-                    },
-                    children: const <int, Widget>{
-                      0: Text('Mon'),
-                      1: Text('Tue'),
-                      2: Text('Wed'),
-                      3: Text('Thu'),
-                      4: Text('Fri'),
-                      5: Text('Sat'),
-                      6: Text('Sun'),
-                    },
-                  ),
+            return SafeArea(
+              child: NestedScrollView(
+                headerSliverBuilder:
+                    (BuildContext context, bool innerBoxIsScrolled) {
+                  return [
+                    const SliverAppBar(
+                      title: Text(
+                        "Have a good day!",
+                        style: TextStyle(
+                          fontSize: 42,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ];
+                },
+                body: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Header(percentDone: state.percentDone),
+                    SizedBox(
+                      height: 50,
+                      child: CupertinoSlidingSegmentedControl<int>(
+                        groupValue: sliding,
+                        onValueChanged: (value) {
+                          setState(() {
+                            sliding = value!;
+                            print("Sliding $sliding");
+                            BlocProvider.of<HomePageBloc>(context)
+                                .add(HomePageLoadData(sliding));
+                          });
+                        },
+                        children: const <int, Widget>{
+                          0: Text('Mon'),
+                          1: Text('Tue'),
+                          2: Text('Wed'),
+                          3: Text('Thu'),
+                          4: Text('Fri'),
+                          5: Text('Sat'),
+                          6: Text('Sun'),
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        controller: _tabController,
+                        children: <Widget>[
+                          ListView.builder(
+                            itemCount: state.listTask.length,
+                            itemBuilder: ((context, index) {
+                              return TaskTile(
+                                task: state.listTask[index],
+                                color: getColor(index),
+                              );
+                            }),
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: TabBarView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    controller: _tabController,
-                    children: <Widget>[
-                      ListView.builder(
-                        itemCount: state.listTask.length,
-                        itemBuilder: ((context, index) {
-                          return TaskTile(
-                            task: state.listTask[index],
-                            color: getColor(index),
-                          );
-                        }),
-                      )
-                    ],
-                  ),
-                ),
-              ],
+              ),
             );
           } else {
             return const Text("Homepage Error");
