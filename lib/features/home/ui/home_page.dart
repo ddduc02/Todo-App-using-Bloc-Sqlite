@@ -2,10 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:todo_app/features/home/bloc/home_page_bloc.dart';
-import 'package:todo_app/features/home/ui/addtask_page.dart';
+import 'package:todo_app/features/home/ui/add_update_ask.dart';
 import 'package:todo_app/features/home/ui/widget/header.dart';
 import 'package:todo_app/features/home/ui/widget/task_title.dart';
 import 'package:todo_app/helper/taskhelper.dart';
+import 'package:todo_app/sf/notification.dart';
 import 'package:todo_app/sf/preferences.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,15 +19,16 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int? sliding;
+
+  int sliding = 0;
 
   String? userId;
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 7, vsync: this);
+    _tabController = TabController(length: 1, vsync: this);
     TaskHelper.instance.init();
-    BlocProvider.of<HomePageBloc>(context).add(HomePageLoadData());
+    BlocProvider.of<HomePageBloc>(context).add(HomePageLoadData(sliding));
     _getUserId();
   }
 
@@ -34,48 +36,69 @@ class _HomePageState extends State<HomePage>
     userId = await Preferences.instance.getUser();
   }
 
+  Color getColor(int index) {
+    Color color;
+    if (index % 3 == 0) {
+      color = Colors.blueAccent;
+    } else if (index % 2 == 1) {
+      color = Colors.yellowAccent;
+    } else {
+      color = Colors.blueGrey;
+    }
+    return color;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('This is a notification')),
-                  );
-                },
-              ),
-            ],
-          )
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('This is a notification')),
+              );
+            },
+          ),
         ],
       ),
       body: BlocConsumer<HomePageBloc, HomePageState>(
         bloc: BlocProvider.of<HomePageBloc>(context),
         buildWhen: (previous, current) =>
             current is! HomePageNavigate && current is! HomePageMessage,
-        // listenWhen: (previous, current) =>
-        //     // current is HomePageNavigate && current is HomePageMessage,
         listener: (context, state) {
           if (state is HomePageAddButtonClickedState) {
-            print("Check state");
             Navigator.push(context, MaterialPageRoute(builder: (context) {
-              return AddTaskPage(userId: userId!);
+              return AddOrUpdateTask(userId: userId!);
             }));
-          } else if (state is AddTaskSuccessState) {
+          } else if (state is HomePageUpdateButtonClickedState) {
+            Navigator.push(context, MaterialPageRoute(builder: (context) {
+              return AddOrUpdateTask(
+                userId: userId!,
+                task: state.task,
+              );
+            }));
+          } else if (state is AddedTaskSuccessState) {
+            BlocProvider.of<HomePageBloc>(context)
+                .add(HomePageLoadData(sliding));
             ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Added a new task")));
           } else if (state is DeletedTaskSuccessState) {
             ScaffoldMessenger.of(context)
                 .showSnackBar(const SnackBar(content: Text("Deleted")));
+            BlocProvider.of<HomePageBloc>(context)
+                .add(HomePageLoadData(sliding));
+          } else if (state is CompletedTaskSuccessState) {
+            BlocProvider.of<HomePageBloc>(context)
+                .add(HomePageLoadData(sliding));
+          } else if (state is UpdatedTaskSuccessState) {
+            BlocProvider.of<HomePageBloc>(context)
+                .add(HomePageLoadData(sliding));
           }
         },
         builder: (context, state) {
           if (state is HomePageLoadSuccess) {
-            print("render");
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -86,10 +109,11 @@ class _HomePageState extends State<HomePage>
                     groupValue: sliding,
                     onValueChanged: (value) {
                       setState(() {
-                        sliding = value;
-                        _tabController.animateTo(value!);
+                        sliding = value!;
+                        print("Sliding $sliding");
+                        BlocProvider.of<HomePageBloc>(context)
+                            .add(HomePageLoadData(sliding));
                       });
-                      // _tabController.index = sliding!;
                     },
                     children: const <int, Widget>{
                       0: Text('Mon'),
@@ -104,6 +128,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 Expanded(
                   child: TabBarView(
+                    physics: const NeverScrollableScrollPhysics(),
                     controller: _tabController,
                     children: <Widget>[
                       ListView.builder(
@@ -111,22 +136,17 @@ class _HomePageState extends State<HomePage>
                         itemBuilder: ((context, index) {
                           return TaskTile(
                             task: state.listTask[index],
+                            color: getColor(index),
                           );
                         }),
-                      ),
-                      const Text("Tue"),
-                      const Text("Wed"),
-                      const Text("Thu"),
-                      const Text("Fri"),
-                      const Text("Sat"),
-                      const Text("Sun"),
+                      )
                     ],
                   ),
                 ),
               ],
             );
           } else {
-            return const Text("Error");
+            return const Text("Homepage Error");
           }
         },
       ),

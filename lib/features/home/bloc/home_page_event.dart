@@ -3,13 +3,28 @@ part of 'home_page_bloc.dart';
 @immutable
 abstract class HomePageEvent {}
 
-class HomePageLoadData extends HomePageEvent {}
+class HomePageLoadData extends HomePageEvent {
+  int dayOfWeek;
+  HomePageLoadData(this.dayOfWeek);
+}
 
+class HeaderLoadEvent extends HomePageEvent {
+  final String date;
+  HeaderLoadEvent(this.date);
+}
+
+//navigate
 class AddButtonClickedEvent extends HomePageEvent {}
 
-class AddTaskClickedEvent extends HomePageEvent {
+class UpdateButtonClickEvent extends HomePageEvent {
   final Task task;
-  AddTaskClickedEvent(this.task);
+  UpdateButtonClickEvent(this.task);
+}
+
+// CRUD
+class AddTaskEvent extends HomePageEvent {
+  final Task task;
+  AddTaskEvent(this.task);
 }
 
 class AddedTaskEvent extends HomePageEvent {}
@@ -22,4 +37,9 @@ class CompleteTaskEvent extends HomePageEvent {
 class DeleteTaskEvent extends HomePageEvent {
   final Task task;
   DeleteTaskEvent(this.task);
+}
+
+class UpdateTaskEvent extends HomePageEvent {
+  final Task task;
+  UpdateTaskEvent(this.task);
 }

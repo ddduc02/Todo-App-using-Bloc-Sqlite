@@ -50,14 +50,44 @@ class TaskHelper {
     await db?.delete(TABLE_TASK, where: 'taskId = ?', whereArgs: [task.taskId]);
   }
 
-  Future<List<Task>> getAllTasks(String userId) async {
+  Future<List<Task>> getAllTasks(String userId, int dayOfWeek) async {
     final db = TaskHelper.instance.db;
+    int dayOfWeek2 = (dayOfWeek + 1) % 7;
     var res = await db!.rawQuery(
-        "SELECT * FROM $TABLE_TASK WHERE userId = '$userId' AND isCompleted = 0");
+        "SELECT * FROM $TABLE_TASK WHERE userId = '$userId' AND isCompleted = 0 AND strftime('%w', dueDate) = '$dayOfWeek2'");
     List<Task> tasks = [];
+    print("check res $res");
     for (var taskMap in res) {
+      print(Task.fromMap(taskMap).dueDate);
       tasks.add(Task.fromMap(taskMap));
     }
     return tasks;
+  }
+
+  Future<double> getAllTasksByDay(String userId, String date) async {
+    final db = TaskHelper.instance.db;
+    var res = await db!.rawQuery(
+        "SELECT * FROM $TABLE_TASK WHERE userId = '$userId' AND DATE(dueDate) = DATE('$date')");
+    var res2 = await db!.rawQuery(
+        "SELECT * FROM $TABLE_TASK WHERE userId = '$userId' AND isCompleted = 0 AND DATE(dueDate) = DATE('$date')");
+    List<Task> allTask = [];
+    List<Task> unCompletedTask = [];
+    print("check res1 $res");
+    print("check res2 $res2");
+
+    for (var taskMap in res) {
+      print(Task.fromMap(taskMap).dueDate);
+      allTask.add(Task.fromMap(taskMap));
+    }
+
+    for (var taskMap in res2) {
+      print(Task.fromMap(taskMap).dueDate);
+      unCompletedTask.add(Task.fromMap(taskMap));
+    }
+    double percentage = 0.0;
+    if (allTask.length > 0) {
+      percentage = (1 - unCompletedTask.length / allTask.length) * 100;
+    }
+    return percentage;
   }
 }

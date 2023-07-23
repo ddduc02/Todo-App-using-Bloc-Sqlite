@@ -7,12 +7,17 @@ import 'package:todo_app/features/signup/ui/signup.dart';
 import 'package:todo_app/helper/taskhelper.dart';
 import 'package:todo_app/helper/userhelper.dart';
 import 'package:todo_app/models/user.dart';
+import 'package:todo_app/sf/notification.dart';
 import 'package:todo_app/sf/preferences.dart';
+// import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await UserHelper.instance.init();
   await TaskHelper.instance.init();
+  tz.initializeTimeZones();
+  await NotificationService.instance.initNotification();
 
   runApp(MyApp());
 }

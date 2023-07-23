@@ -15,7 +15,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       User? user =
           await UserHelper.instance.getUsers(event.userName, event.password);
       if (user != null) {
-        print('check !null');
         Preferences.instance.setIsLoggedIn();
         Preferences.instance.setUser(user.id!);
         emit(LoginSubmitSuccessState(user));

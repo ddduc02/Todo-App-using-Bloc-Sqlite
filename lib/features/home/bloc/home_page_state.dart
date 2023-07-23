@@ -11,14 +11,27 @@ class HomePageInitial extends HomePageState {}
 
 class HomePageLoadSuccess extends HomePageState {
   final List<Task> listTask;
+  double percentDone;
 
-  HomePageLoadSuccess(this.listTask);
+  HomePageLoadSuccess(this.listTask, this.percentDone);
 }
+
+// class HeaderLoadSuccess extends HomePageState {
+//   double percentDone;
+//   HeaderLoadSuccess(this.percentDone);
+// }
 
 class HomePageAddButtonClickedState extends HomePageNavigate {}
 
-class AddTaskSuccessState extends HomePageMessage {}
+class HomePageUpdateButtonClickedState extends HomePageNavigate {
+  final Task task;
+  HomePageUpdateButtonClickedState(this.task);
+}
 
-class CompletedTaskState extends HomePageMessage {}
+class AddedTaskSuccessState extends HomePageMessage {}
+
+class CompletedTaskSuccessState extends HomePageMessage {}
 
 class DeletedTaskSuccessState extends HomePageMessage {}
+
+class UpdatedTaskSuccessState extends HomePageMessage {}

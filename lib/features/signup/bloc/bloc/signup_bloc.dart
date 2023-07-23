@@ -13,9 +13,8 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       emit(SignUpInitial());
     });
     on<SignUpBtnClickedEvent>((event, emit) async {
-      print("check clicked event");
       emit(SignUpLoadingState());
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 1));
       var idRandom = Random().nextInt(1000);
       User user = User(idRandom.toString(), 0,
           username: event.userName, password: event.password);

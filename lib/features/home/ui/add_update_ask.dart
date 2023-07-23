@@ -4,32 +4,47 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:todo_app/features/home/bloc/home_page_bloc.dart';
 import 'package:todo_app/models/task.dart';
 import 'package:intl/intl.dart';
+import 'package:todo_app/sf/notification.dart';
 
-class AddTaskPage extends StatefulWidget {
-  const AddTaskPage({Key? key, required this.userId}) : super(key: key);
-
+class AddOrUpdateTask extends StatefulWidget {
+  const AddOrUpdateTask({Key? key, required this.userId, this.task})
+      : super(key: key);
+  final Task? task;
   final String userId;
   @override
-  _AddTaskPageState createState() => _AddTaskPageState();
+  _AddOrUpdateTaskState createState() => _AddOrUpdateTaskState();
 }
 
-class _AddTaskPageState extends State<AddTaskPage> {
+class _AddOrUpdateTaskState extends State<AddOrUpdateTask> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+
+  @override
+  void initState() {
+    if (widget.task != null) {
+      _titleController.text = widget.task!.title;
+      _descriptionController.text = widget.task!.description;
+      _selectedDate = widget.task!.dueDate;
+      _selectedTime = TimeOfDay.fromDateTime(widget.task!.dueDate);
+    }
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Task'),
+        title: Text(widget.task == null ? "Add task" : "Update task"),
       ),
       body: BlocConsumer<HomePageBloc, HomePageState>(
         bloc: BlocProvider.of<HomePageBloc>(context),
         listener: (context, state) {
-          if (state is AddTaskSuccessState) {
-            BlocProvider.of<HomePageBloc>(context).add(AddedTaskEvent());
+          if (state is AddedTaskSuccessState) {
+            Navigator.pop(context);
+          } else if (state is UpdatedTaskSuccessState) {
             Navigator.pop(context);
           }
         },
@@ -41,18 +56,23 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   TextFormField(
+                    autofocus: true,
                     controller: _titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: widget.task == null
+                          ? "Title"
+                          : widget.task!.title.toString(),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _descriptionController,
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
+                    decoration: InputDecoration(
+                      labelText: widget.task == null
+                          ? "Descreption"
+                          : widget.task!.description.toString(),
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -71,9 +91,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      _addTask();
+                      _addOrUpdateTask();
                     },
-                    child: const Text('Add Task'),
+                    child:
+                        Text(widget.task == null ? "Add task" : "Update task"),
                   ),
                 ],
               ),
@@ -91,12 +112,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
       firstDate: DateTime(2021),
       lastDate: DateTime(2030),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        print("Check $_selectedDate");
-      });
-    }
+    setState(() {
+      _selectedDate = picked!;
+      print("Check $_selectedDate");
+    });
   }
 
   Future<void> _selectTime(BuildContext context) async {
@@ -104,28 +123,31 @@ class _AddTaskPageState extends State<AddTaskPage> {
       context: context,
       initialTime: _selectedTime,
     );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
+    setState(() {
+      _selectedTime = picked!;
+      print("Check $_selectedTime");
+    });
   }
 
-  void _addTask() {
+  void _addOrUpdateTask() {
     String title = _titleController.text.trim().toString();
     String description = _descriptionController.text.trim().toString();
     DateTime dueDate = DateTime(_selectedDate.year, _selectedDate.month,
         _selectedDate.day, _selectedTime.hour, _selectedTime.minute);
-    Random random = Random();
-    String taskId = random.nextInt(1000).toString();
-    Task addTask = Task(
-        taskId: taskId,
+    Task task = Task(
+        taskId: widget.task?.taskId ?? UniqueKey().toString(),
         title: title,
         description: description,
         dueDate: dueDate,
         isCompleted: 0,
         userId: widget.userId);
-    print("due date + ${addTask.isCompleted.runtimeType}");
-    BlocProvider.of<HomePageBloc>(context).add(AddTaskClickedEvent(addTask));
+    if (widget.task != null) {
+      NotificationService.instance.checkTaskDueDate(task);
+      BlocProvider.of<HomePageBloc>(context).add(UpdateTaskEvent(task));
+    } else {
+      NotificationService.instance.checkTaskDueDate(task);
+
+      BlocProvider.of<HomePageBloc>(context).add(AddTaskEvent(task));
+    }
   }
 }
