@@ -1,7 +1,10 @@
 Demo:
 
 
-https://github.com/ddduc02/Todo-App-using-Bloc-Sqlite/assets/90397108/84447420-4e76-4f96-9ff1-69a51412d255
+https://github.com/ddduc02/Todo-App-using-Bloc-Sqlite/assets/90397108/bb840a02-102a-42cc-bb40-a780c97c54b9
+
+
+
 
 
 
